@@ -14,4 +14,4 @@ The following comments are generated (in the appropriate situations):
 6. @throws for RuntimeExceptions. When executed on a line containing something like "throw new RuntimeException()", a @throws-tag is added to the previous JavaDoc-comment.
 7. Block-end comments. When executed on a line containing a '}'-character and possibly some whitespace (but nothing else), generates a one-line-comment describing what block the '}' is terminating. For example, the comment for "aVeryLongMethod" is  "// END: aVeryLongMethod".
 
-There are a bunch of other functions to support the comment generation (see the start of the script for full documentation). The style of the comment templates is configurable (see the file for configuration and description of the options)
+There are a bunch of other functions to support the comment generation. The style of the comment templates is configurable
