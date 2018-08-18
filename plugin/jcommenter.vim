@@ -15,7 +15,7 @@
 "=====================================================================
 
 scriptencoding utf-8
-if exists('s:javacomplete_loaded')
+if exists('s:javacomplete_loaded') || &compatible
   finish
 endif
 let s:javacomplete_loaded = 1
@@ -30,23 +30,23 @@ function! s:SetDefaultVal(var, val)
 endfunction
 
 " The initial settings correspond with Sun's coding conventions.
-call s:SetDefaultVal('g:jcommenter_default_mappings', 1)
-call s:SetDefaultVal('g:jcommenter_move_cursor', 1)
-call s:SetDefaultVal('g:jcommenter_description_starts_from_first_line', 0)
-call s:SetDefaultVal('g:jcommenter_autostart_insert_mode', 1)
+call s:SetDefaultVal('g:jcommenter_default_mappings', v:true)
+call s:SetDefaultVal('g:jcommenter_move_cursor', v:true)
+call s:SetDefaultVal('g:jcommenter_description_starts_from_first_line', v:false)
+call s:SetDefaultVal('g:jcommenter_autostart_insert_mode', v:true)
 call s:SetDefaultVal('g:jcommenter_method_description_space', 2)
 call s:SetDefaultVal('g:jcommenter_field_description_space', 1)
 call s:SetDefaultVal('g:jcommenter_class_description_space', 2)
-call s:SetDefaultVal('g:jcommenter_smart_method_description_spacing', 1)
+call s:SetDefaultVal('g:jcommenter_smart_method_description_spacing', v:true)
 call s:SetDefaultVal('g:jcommenter_class_author', '')
 call s:SetDefaultVal('g:jcommenter_class_version', '')
 call s:SetDefaultVal('g:jcommenter_file_author', '')
 call s:SetDefaultVal('g:jcommenter_file_copyright', '')
 call s:SetDefaultVal('g:jcommenter_use_exception_tag', 0)
-call s:SetDefaultVal('g:jcommenter_file_noautotime', 0)
-call s:SetDefaultVal('g:jcommenter_update_comments', 1)
-call s:SetDefaultVal('g:jcommenter_remove_tags_on_update', 1)
-call s:SetDefaultVal('g:jcommenter_add_empty_line', 1)
+call s:SetDefaultVal('g:jcommenter_file_noautotime', v:false)
+call s:SetDefaultVal('g:jcommenter_update_comments', v:true)
+call s:SetDefaultVal('g:jcommenter_remove_tags_on_update', v:true)
+call s:SetDefaultVal('g:jcommenter_add_empty_line', v:true)
 call s:SetDefaultVal('g:jcommenter_modeline', '// vim'
       \. ': ' . (&expandtab ? 'et' : 'noet') . 'sw=' . &shiftwidth . ' ts=' . &tabstop)
 " Unsupported feature:
@@ -71,35 +71,28 @@ if g:jcommenter_default_mappings
   map  <M-c>      :call JCommentWriter()<CR>
   imap <M-c> <esc>:call JCommentWriter()<CR>
 
-  map  <M-n>      :call SearchInvalidComment(0)<cr>
-  imap <M-n> <esc>:call SearchInvalidComment(0)<cr>a
-  map  <M-p>      :call SearchInvalidComment(1)<cr>
-  imap <M-p> <esc>:call SearchInvalidComment(1)<cr>a
+  map  <M-n>      :call SearchInvalidComment(0)<CR>
+  imap <M-n> <esc>:call SearchInvalidComment(0)<CR>a
+  map  <M-p>      :call SearchInvalidComment(1)<CR>
+  imap <M-p> <esc>:call SearchInvalidComment(1)<CR>a
 
 " TODO: test this map
-"imap <silent> { {<esc>:call search('\w', 'b')<cr>:call ConditionalWriter()<cr>0:call search('{')<cr>a
+  iabbrev {- {<esc>:call search('\w', 'b')<CR>:call ConditionalWriter()<CR>0:call search('{')<CR>a
 
-  iabbrev }- }<esc>h%?\w<cr>:nohl<cr>:call JCommentWriter()<cr>
+  iabbrev }- }<esc>h%?\w<CR>:nohl<CR>:call JCommentWriter()<CR>
 endif
 
 " ===================================================
 " Script local variables
 " ===================================================
-" variable that tells what is put before the written string when using
-" the AppendStr-function.
+" Text to write before the string when using the AppendStr-function.
 let s:indent = ''
 
-" The string that includes the text of the line on which the commenter
-" was called, or the whole range. This is what is parsed.
+" String with the text of the commenter was walled over
 let s:combinedString = ''
 
 let s:rangeStart = 1   " line on which the range started
 let s:rangeEnd   = 1   " line on which the range ended
-
-let s:defaultClassDescriptionSpace  = 1
-
-let s:linesAppended = 0 " this counter is increased when the AppendStr-method
-" is called.
 
 let s:docCommentStart = -1
 let s:docCommentEnd   = -1
@@ -145,7 +138,6 @@ function! JCommentWriter() range
   endif
 
   " echo s:debugstring
-  let b:jcommenter_lines_appended = s:linesAppended
 endfunction
 
 " ===================================================
@@ -181,7 +173,7 @@ function! s:UpdateExceptions()
     call s:AppendStr(' * @throws ' . l:exceptionName . ' ' . g:jcommenter_default_throw_text)
     call s:MarkUpdateMade(l:tagAppendPos + 1)
     let s:docCommentEnd += 1
-    let l:tagAppendPos = l:tagAppendPos + 1
+    let l:tagAppendPos += 1
     let l:tagName = s:GetNextParameterName()
   endwhile
 endfunction
@@ -236,7 +228,7 @@ function! s:RemoveNonExistingParameters()
     if l:paramExists == 0
       call s:RemoveTag(l:Start, s:docCommentEnd, 'param', l:tagParam)
     else
-      let l:Start = l:Start + 1
+      let l:Start += 1
     endif
 
     let s:method_paramList = l:paramlist
@@ -276,7 +268,7 @@ function! s:UpdateParameters()
     call s:AppendStr(' * @param ' . l:tagName . ' ' . g:jcommenter_default_param_text)
     call s:MarkUpdateMade(l:tagAppendPos + 1)
     let s:docCommentEnd += 1
-    let l:tagAppendPos = l:tagAppendPos + 1
+    let l:tagAppendPos += 1
     let l:tagName = s:GetNextParameterName()
   endwhile
 
@@ -289,11 +281,11 @@ function! s:FindTag(rangeStart, rangeEnd, tagName, tagParam)
   let l:i = a:rangeStart
   while l:i <= a:rangeEnd
     if a:tagParam !=# ''
-      if getline(l:i) =~# '^\s*\(\*\s*\)\=@' . a:tagName . '\s\+' . a:tagParam . '\(\s\|$\)'
+      if getline(l:i) =~# '^\s*\%(\*\s*\)\=@' . a:tagName . '\s\+' . a:tagParam . '\%(\s\|$\)'
         return l:i
       endif
     else
-      if getline(l:i) =~# '^\s*\(\*\s*\)\=@' . a:tagName . '\(\s\|$\)'
+      if getline(l:i) =~# '^\s*\%(\*\s*\)\=@' . a:tagName . '\%(\s\|$\)'
         return l:i
       endif
     endif
@@ -305,7 +297,7 @@ endfunction
 function! s:FindFirstTag(rangeStart, rangeEnd, tagName)
   let l:i = a:rangeStart
   while l:i <= a:rangeEnd
-    if getline(l:i) =~# '^\s*\(\*\s*\)\=@' . a:tagName . '\(\s\|$\)'
+    if getline(l:i) =~# '^\s*\%(\*\s*\)\=@' . a:tagName . '\%(\s\|$\)'
       return l:i
     endif
     let l:i += 1
@@ -316,7 +308,7 @@ endfunction
 function! s:FindAnyTag(rangeStart, rangeEnd)
   let l:i = a:rangeStart
   while l:i <= a:rangeEnd
-    if getline(l:i) =~# '^\s*\(\*\s*\)\=@'
+    if getline(l:i) =~# '^\s*\%(\*\s*\)\=@'
       return l:i
     endif
     let l:i = 1
@@ -334,7 +326,7 @@ function! s:RemoveTag(rangeStart, rangeEnd, tagName, tagParam)
     let l:tagEndPos = s:docCommentEnd - 1
   endif
   let l:linesToDelete = l:tagEndPos - l:tagStartPos
-  execute 'normal ' . l:tagStartPos . 'G' . l:linesToDelete . 'dd'
+  execute 'normal! ' . l:tagStartPos . 'G' . l:linesToDelete . 'dd'
   let s:docCommentEnd -= l:linesToDelete
 endfunction
 
@@ -356,7 +348,7 @@ function! s:ExpandSinglelineCommentsEx(line, space)
   endif
   let s:indent = s:GetIndentation(l:str)
   let l:str = substitute(l:str, l:singleLinePattern, '\1', '')
-  execute 'normal ' . a:line . 'Gdd'
+  execute 'normal! ' . a:line . 'Gdd'
   let s:appendPos = a:line - 1
   call s:AppendStr('/**')
   call s:AppendStr(' * ' . l:str)
@@ -382,7 +374,6 @@ function! s:WriteMethodComments()
   call s:ResolveMethodParams(s:combinedString)
   let s:appendPos = s:rangeStart - 1
   let s:indent = s:method_indent
-  let s:linesAppended = 0
 
   let l:existingDocCommentType = s:HasDocComments()
   let l:method_comment_update_only = 0
@@ -464,12 +455,12 @@ function! s:WriteFunctionEndComments()
   normal! %
   " Now we are on the '{' mark. Next we go backwards to the line on which the
   " class/method declaration seems to be on:
-  call search('\%(^\|.*\s\)\%(\%(\(\h\w*\)\s*(\)\|\%(\%(class\|interface\)\s\+\(\u\w*\)\)\).*', 'b')
+  call search('\%(^\|.*\s\)\%(\%(\%(\h\w*\)\s*(\)\|\%(\%(class\|interface\)\s\+\%(\u\w*\)\)\).*', 'b')
   let l:header = getline('.')
   let l:name = substitute(l:header, '\%(^\|.*\s\)\%(\%(\(\h\w*\)\s*(\)\|\%(\%(class\|interface\)\s\+\(\u\w*\)\)\).*', '\1\2', '')
   call search('{') " go back to the end...
   normal! %
-  execute 'normal a // END: ' . l:name
+  execute 'normal! a // END: ' . l:name
 endfunction
 
 function! s:WriteFoundException()
@@ -648,14 +639,6 @@ function! s:ResolveMethodParams(methodHeader)
   endif
 endfunction
 
-
-function! s:IsConstructor(methodHeader)
-  if a:methodHeader =~# '\(^\|\s\)[A-Z][a-zA-Z0-9]*\s*('
-    let s:debugstring .= 'IsConstructor'
-  endif
-  return a:methodHeader =~# '\(^\|\s\)[A-Z][a-zA-Z0-9]*\s*('
-endfunction
-
 function! s:GetNextParameterName()
   let l:result = substitute(s:method_paramList, '.\{-}\s\+\(' . s:javaname . '\)\s*\(,.*\|$\)', '\1', '')
   if s:method_paramList !~# ','
@@ -681,26 +664,28 @@ endfunction
 " Functions to determine what is meant to be commented
 " ===================================================
 
-" pattern for java-names (like methods, classes, variable names etc)
+let s:empty_start = '\%(^\|\s\)'
+
 let s:javaname = '[a-zA-Z_][a-zA-Z0-9_]*'
 
-let s:brackets = '\(s*\([\s*]\s\+\)\=\)'
+let s:brackets       = '\%(\s*\(\[\s*\]\)\=\s*\)'
+let s:generic_angles = '\%(\%(\s*<\s*\%(?\|' . s:javaname . '\)\s*>\s*\)\|\s*\)'
 
-let s:javaMethodPattern     = '\(^\|\s\+\)' . s:javaname . '\s*(.*)\s*\(throws\|{\|;\|$\)'
-let s:javaMethodAntiPattern = '='
+let s:javaConstructorPattern = s:empty_start . '[A-Z][a-zA-Z0-9]*\s*('
+let s:javaMethodPattern      = s:empty_start . s:javaname . '\s*(.*)\s*\%(throws\|{\|;\|$\)'
+let s:javaMethodAntiPattern  = '='
+let s:javaThrowPattern       = '\<throw\s*new\s*' . s:javaname
+let s:javaClassPattern       = s:empty_start . '\%(class\|interface\)\s\+' . s:javaname
+let s:javaVariablePattern    = s:empty_start . s:javaname . s:generic_angles
+                           \ . s:brackets . s:javaname . s:brackets . '\%(;\|=.*;\)'
 
-let s:commentTagPattern     = '^\s*\*\=\s*@[a-zA-Z]\+\(\s\|$\)'
-
-let s:javaClassPattern      = '\(^\|\s\)\(class\|interface\)\s\+' . s:javaname . '\({\|\s\|$\)'
-
-" FIXME: this might not be valid:
-let s:javaVariablePattern   = '\(\s\|^\)' . s:javaname . s:brackets . '.*\(;\|=.*;\)'
+let s:singleLineCommentPattern = '^\s*/\*\*.*\*/\s*$'
+let s:commentTagPattern        = '^\s*\*\=\s*@[a-zA-Z]\+\%(\s\|$\)'
 
 function! s:IsExceptionDeclaration()
-  return s:combinedString =~# '\<throw\s*new\s*[a-zA-Z0-9]*'
+  return s:combinedString =~# s:javaThrowPattern
 endfunction
 
-" Should file comments be written?
 function! s:IsFileComments()
   return s:rangeStart <= 1 && s:rangeStart == s:rangeEnd
 endfunction
@@ -710,10 +695,9 @@ function! s:IsModeLine()
 endfunction
 
 function! s:IsSinglelineComment()
-  return s:combinedString =~# '^\s*/\*\*\(.*\)\*/\s*$'
+  return s:combinedString =~# s:singleLineCommentPattern
 endfunction
 
-" Executed on a comment-tag?
 function! s:IsCommentTag()
   return s:combinedString =~# s:commentTagPattern
 endfunction
@@ -722,19 +706,22 @@ function! s:IsFunctionEnd()
   return s:combinedString =~# '^\s*}\s*$'
 endfunction
 
-" Executed on a method declaration?
+function! s:IsConstructor(methodHeader)
+  if a:methodHeader =~# s:javaConstructorPattern
+    let s:debugstring .= 'IsConstructor'
+  endif
+  return a:methodHeader =~# s:javaConstructorPattern
+endfunction
+
 function! s:IsMethod()
   let l:str = s:combinedString
-
   return l:str =~# s:javaMethodPattern && l:str !~# s:javaMethodAntiPattern
 endfunction
 
-" Executed on a class declaration?
 function! s:IsClass()
   return s:combinedString =~# s:javaClassPattern
 endfunction
 
-" Executed on variable declaration?
 function! s:IsVariable()
   return s:combinedString =~# s:javaVariablePattern
 endfunction
@@ -744,17 +731,17 @@ function! s:HasMultilineDocComments()
   let l:linenum = s:rangeStart - 1
   let l:str = getline(l:linenum)
   while l:str =~# '^\s*$' && l:linenum > 1
-    let l:linenum = l:linenum - 1
+    let l:linenum -= 1
     let l:str = getline(l:linenum)
   endwhile
   if l:str !~# '\*/\s*$' || l:str =~# '/\*\*.*\*/'
     return 0
   endif
   let s:docCommentEnd = l:linenum
-  let l:linenum = l:linenum - 1
+  let l:linenum -= 1
   let l:str = getline(l:linenum)
-  while l:str !~# '\(/\*\|\*/\)' && l:linenum >= 1
-    let l:linenum = l:linenum - 1
+  while l:str !~# '\%(/\*\|\*/\)' && l:linenum >= 1
+    let l:linenum -= 1
     let l:str = getline(l:linenum)
   endwhile
   if l:str =~# '^\s*/\*\*'
@@ -767,23 +754,22 @@ function! s:HasMultilineDocComments()
   endif
 endfunction
 
-
 function! s:SearchPrevDocComments()
   let l:linenum = s:rangeStart - 1
   while 1
     let l:str = getline(l:linenum)
     while l:str !~# '\*/' && l:linenum > 1
-      let l:linenum = l:linenum - 1
+      let l:linenum -= 1
       let l:str = getline(l:linenum)
     endwhile
     if l:linenum <= 1
       return 0
     endif
     let s:docCommentEnd = l:linenum
-    let l:linenum = l:linenum - 1
+    let l:linenum -= 1
     let l:str = getline(l:linenum)
     while l:str !~# '\(/\*\|\*/\)' && l:linenum >= 1
-      let l:linenum = l:linenum - 1
+      let l:linenum -= 1
       let l:str = getline(l:linenum)
     endwhile
     if l:str =~# '^\s*/\*\*'
@@ -803,16 +789,16 @@ function! s:HasSingleLineDocComments()
   let l:linenum = s:rangeStart - 1
   let l:str = getline(l:linenum)
   while l:str =~# '^\s*$' && l:linenum > 1
-    let l:linenum = l:linenum - 1
+    let l:linenum -= 1
     let l:str = getline(l:linenum)
   endwhile
-  if l:str =~# '^\s*/\*\*.*\*/\s*$'
+  if l:str =~# s:singleLineCommentPattern
     let s:singleLineCommentPos = l:linenum
     let s:docCommentStart = l:linenum
     let s:docCommentEnd   = l:linenum
-    return 1
+    return v:true
   endif
-  return 0
+  return v:false
 endfunction
 
 function! s:HasDocComments()
@@ -838,7 +824,7 @@ function! s:GetCombinedString(rangeStart, rangeEnd)
 
   while l:line < a:rangeEnd
     let l:line += 1
-    let l:combinedString = l:combinedString . ' ' . getline(l:line)
+    let l:combinedString .= ' ' . getline(l:line)
   endwhile
 
   return substitute(l:combinedString, '^\([^;{]*[;{]\=\).*', '\1', '')
@@ -858,7 +844,7 @@ function! s:MoveCursor()
   endif
   let l:startInsert = g:jcommenter_autostart_insert_mode
   if g:jcommenter_description_starts_from_first_line
-    call cursor(s:rangeStart, 99999) " Arbitrary big number of column
+    call cursor(s:rangeStart, 99999)     " Arbitrary big number
   else
     call cursor(s:rangeStart + 1, 99999)
   endif
@@ -875,7 +861,6 @@ let s:appendPos = 1
 function! s:AppendStr(string)
   call append(s:appendPos, s:indent . a:string)
   let s:appendPos += 1
-  let s:linesAppended += 1
 endfunction
 
 function! s:AddEmpty()
@@ -899,7 +884,8 @@ endfunction
 let s:noCommentTrunk    = '^\s*\/\*\*\s*\n\%(\s*\*\s*\n\)*\%(\s*\*\s*@\|\s*\*\/\)'
 let s:noParamTagComment = '^\s*\*\s*@\%(param\|throws\|exception\)\%(\s\+\h\w*\)\=\s*$'
 let s:noTagComment      = '^\s*\*\s*@\%(return\|see\|version\|since\)\s*$'
-let s:invalComments     = '\%(' . s:noCommentTrunk . '\)\|\%(' . s:noParamTagComment . '\)\|\%(' . s:noTagComment . '\)'
+let s:invalComments     = '\%(' . s:noCommentTrunk . '\)\|\%(' . s:noParamTagComment
+                      \ . '\)\|\%(' . s:noTagComment . '\)'
 
 function! SearchInvalidComment(backwards)
   let l:param = a:backwards ? 'wb' : 'w'
@@ -925,9 +911,9 @@ endfunction
 
 function! ConditionalWriter()
   let l:line = getline('.')
-  let l:doDoc = (l:line =~# '\(^\|\s\)\h\w*\s\+\h\w*\s*(.*)') " Methods (always have ret. value)
-  let l:doDoc2 = (l:line =~# '^\s*\u\w*\s*(.*)')  " Constructors (always begin w/ uppercase letter)
-  let l:doDoc3 = (l:line =~# '^\s*\%([a-z]\+\s\+\)*class\s\+\u\w*\%(\s\+\%(implements\|extends\)\s\+.*\)\{0,2}')
+  let l:doDoc = (l:line =~# s:javaMethodPattern)
+  let l:doDoc2 = (l:line =~# s:javaConstructorPattern)
+  let l:doDoc3 = (l:line =~# s:javaClassPattern)
   if l:doDoc || l:doDoc2 || l:doDoc3
     let l:oldmove = g:jcommenter_move_cursor
     let g:jcommenter_move_cursor = 0
@@ -936,4 +922,4 @@ function! ConditionalWriter()
   endif
 endfunction
 
-" vim: set et sw=2 ts=2:
+" vim:et sw=2 ts=2 tw=100

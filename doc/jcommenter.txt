@@ -167,21 +167,22 @@ Otherwise, the following mappings apply:
 
 g:jcommenter_default_mappings
         Defines whether if the default mappings apply
-        Default: 1
+        Default: v:true
 
 g:jcommenter_move_cursor
         Move cursor to the place where inserting comments supposedly should
-        start. Default: 1
+        start.
+        Default: v:true
 
 g:jcommenter_description_starts_from_first_line
         Defines whether to move the cursor to the line which has "/**" or the
         line after that. Effective only if g:jcommenter_move_cursor is enabled
-        Default: 0
+        Default: v:false
 
 g:jcommenter_autostart_insert_mode
         Start insert mode after calling the commenter. Effective only if
         g:jcommenter_move_cursor is enabled.
-        Default: 1
+        Default: v:true
 
 g:jcommenter_method_description_space
         The number of empty rows (containing only the star) to be added for
@@ -205,7 +206,7 @@ g:jcommenter_smart_method_description_spacing
         allways one row. This is handy if you want to keep an empty line
         between the description and the tags, as is defined in Sun's java code
         conventions
-        Default: 1
+        Default: v:true
 
 g:jcommenter_class_author
         The content for the author-tag of class-comments. Use a string to
@@ -222,7 +223,7 @@ g:jcommenter_class_version
 g:jcommenter_file_template_generator
         If not an empty string, it is taken as the name of a function that can
         be used to generate the file template.
-        An template-generation function can be defined as follows:
+        A template-generation function can be defined as follows:
 
             function! MyTemplateFunction()
                 let l:template = ['/* File name: ' . bufname('%')  ,
@@ -253,20 +254,20 @@ g:jcommenter_file_copyright
         Defaut: ''
 
 g:jcommenter_file_noautotime
-        Set to 1 if you don't like the automatically added "created"-time.
-        Only applicable if g:jcommenter_file_template_generator is not set to
-        a funcref.
-        Default: 0
+        Set to v:true if you don't like the automatically added
+        "created"-time. Only applicable if
+        g:jcommenter_file_template_generator is not set to a funcref.
+        Default: v:false
 
 g:jcommenter_use_exception_tag
-        Set to 1 if you want to use "@exception" instead of "@throws"
+        Set to v:true if you want to use "@exception" instead of "@throws"
         Default: 0
 
 g:jcommenter_update_comments
         Define whether jcommenter tries to parse and update the existing
         Doc-comments on the item it was executed on. If this feature is
         disabled, a completely new comment-template is written.
-        Default: 1
+        Default: v:true
 
 g:jcommenter_remove_tags_on_update
         Define whether jcommenter should remove old tags (eg. if the return
@@ -275,12 +276,12 @@ g:jcommenter_remove_tags_on_update
         an exception is RTE is very hard. This feature is not throughly
         tested, and might delete something it was not supposed to, so use with
         care. Only applicable if g:jcommenter_update_comments is enabled.
-        Default: 1
+        Default: v:true
 
 g:jcommenter_add_empty_line
         Whether to prepend an empty line before the generated comment, if the
         line just above the comment would otherwise be non-empty.
-        Default: 1
+        Default: v:true
 
 ==============================================================================
 4. Bugs                                                      *jcommenter_bugs*
