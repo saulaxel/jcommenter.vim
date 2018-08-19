@@ -1,5 +1,4 @@
 # Jcommenter
-========
 
 A [neo]vim plugin to generate JavaDoc.
 
@@ -8,7 +7,6 @@ This is a mirror of http://www.vim.org/scripts/script.php?script_id=20
 Updated 19.08.2018 KB
 
 ## Description:
----------------
 
 Generates JavaDoc (and some other) comments for java-sources. This is triggered by executing the JCommentWriter()-function while the cursor is over something meaningfull, or if a selection exists, the selected text is parsed and the comment template is generated based on that.
 
@@ -24,7 +22,6 @@ The following comments are generated (in the appropriate situations):
 There are a bunch of other functions to support the comment generation. The style of the comment templates is configurable
 
 ## Installation
----------------
 
 Use your favorite plugin manager and add a line as the later to the corresponding part of your vim configuration:
 
